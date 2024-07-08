@@ -1,0 +1,39 @@
+name: 'run-cmd'
+description: 'Run command'
+inputs:
+  branch:  # id of input
+    description: 'Branch name'
+    required: true
+  name:
+    description: "Name of the command"
+    required: true
+  command:
+    description: "Command to be run"
+    required: true
+  pr-number:
+    description: "Number of the PR"
+    required: true
+  token:
+    description: "GitHub token"
+    required: false
+runs:
+  using: "composite"
+  steps:
+      - name: Download repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+          token: ${{ inputs.token }}
+      - name: Generate script
+        shell: bash
+        # Here it would get the script from previous step
+        run: bash -c "$COMMAND"
+        env:
+          COMMAND: ${{ inputs.command }}
+      - name: Report failure
+        if: ${{ failure() }}
+        shell: bash
+        run: gh pr comment ${{ inputs.pr-number }} --body "Run for <code>${{ inputs.name }}</code> failed. See logs <a href=\"$RUN\">here</a>."
+        env:
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GH_TOKEN: ${{ github.token }}

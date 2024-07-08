@@ -4,14 +4,16 @@ import Joi from "joi";
 import { Command } from "./command";
 
 const commandSchema = Joi.object<Command>().keys({
-  name: Joi.string().required(),
+  name: Joi.string().trim().required(),
   description: Joi.string().optional(),
   machine: Joi.array().items(Joi.string()).optional(),
   timeout: Joi.number().min(1).optional(),
   commandStart: Joi.string().required(),
 });
 
-export const validateConfig = (config: Command): Command | never =>
+type JoiCommand = Omit<Command, "filename">;
+
+export const validateConfig = (config: JoiCommand): JoiCommand | never =>
   validate<Command>(config, commandSchema, {
     message: "Command file is invalid",
   });

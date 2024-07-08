@@ -5,16 +5,18 @@ branding:
   icon: copy
   color: yellow
 inputs:
-  GITHUB_TOKEN:
-    required: true
-    description: The token to access the repo
   commands-directory:
     required: false
     description: The directory where the command scripts are available
     default: "./github/commands"
+  GITHUB_TOKEN:
+    required: true
+    description: GitHub token used to comment on the issue
 outputs:
   repo:
     description: 'The name of the repo in owner/repo pattern'
+  commands:
+    description: "An array of commands to execute"
 
 runs:
   using: 'docker'

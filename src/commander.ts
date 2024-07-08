@@ -1,6 +1,6 @@
 import { summary } from "@actions/core";
 import { readFile } from "fs/promises";
-import { dirname } from "path";
+import path from "path";
 import { parse } from "yaml";
 
 import { ActionLogger } from "./github/types";
@@ -25,9 +25,10 @@ export class Commander {
     const commands: Command[] = [];
     for (const file of files) {
       const content = await readFile(file, "utf-8");
-      const command = parse(content) as Command;
-      command.location = dirname(file);
       this.logger.info(`Parsing ${file}`);
+      const command = parse(content) as Command;
+      command.filename = path.basename(file, ".yml");
+      command.location = path.dirname(file);
       validateConfig(command);
       commands.push(command);
     }
@@ -50,6 +51,8 @@ export class Commander {
       }
       text = text
         .addEOL()
+        .addRaw(`How to run: <code>/cmd ${command.filename}</code>`)
+        .addEOL()
         .addDetails("File location", `<code>${command.location}</code>`)
         .addEOL();
       if (command.machine) {
@@ -69,5 +72,33 @@ export class Commander {
     }
 
     return text;
+  }
+
+  async parseComment(
+    lines: string[],
+  ): Promise<{ name: string; command: string }[]> {
+    const commands = await this.getCommands();
+    const outputs: { name: string; command: string }[] = [];
+    for (const comment of lines) {
+      // parse "/cmd command"
+      const [_, command] = comment.trim().split(" ");
+
+      this.logger.info(`Searching for command '${command}'`);
+
+      const matchingCommand = commands.findIndex(
+        ({ filename }) => filename === command,
+      );
+      if (matchingCommand < 0) {
+        throw new Error(
+          `Command ${command} not found. ` +
+            "Please see the documentation for valid commands",
+        );
+      }
+
+      const matching = commands[matchingCommand];
+      outputs.push({ name: matching.name, command: matching.commandStart });
+    }
+
+    return outputs;
   }
 }
