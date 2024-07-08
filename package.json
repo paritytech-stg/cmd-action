@@ -4,6 +4,7 @@
   "description": "GitHub action template for Parity",
   "main": "src/index.ts",
   "scripts": {
+    "preinstall": "echo 123"
     "start": "node dist",
     "build": "ncc build --license LICENSE",
     "test": "jest",
